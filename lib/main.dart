@@ -1,9 +1,10 @@
+import 'package:coach/person.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
+import 'package:hive_flutter/hive_flutter.dart';
 import 'todo.dart';
 
 /// Some keys used for testing
@@ -67,7 +68,10 @@ final filteredTodos = Provider<List<Todo>>((ref) {
   }
 });
 
-void main() {
+void main() async {
+  Hive.registerAdapter(PersonAdapter());
+  await Hive.initFlutter();
+  await Hive.openBox('settings');
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -127,7 +131,6 @@ class Home extends HookConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
           children: [
             const Title(),
-            ElevatedButton(onPressed: () {}, child: Text('change lang')),
             TextField(
               key: addTodoKey,
               controller: newTodoController,
@@ -245,28 +248,39 @@ class Title extends StatefulWidget {
 }
 
 class _TitleState extends State<Title> {
-  var count = 0;
+  // var count = 0;
+  var box = Hive.box('settings');
+
+  // @override
+  // void initState() {
+  //   count = box.get('messagesCount') ?? 0;
+  //   super.initState();
+  // }
 
   @override
   Widget build(BuildContext context) {
     var t = AppLocalizations.of(context);
+    var age = Hive.box('settings')
+        .get('person', defaultValue: Person(name: 'name', age: 0, friends: []))
+        .age;
     return Column(
       children: [
-        Text(
-          t!.youHaveMessage(count),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color.fromARGB(38, 47, 47, 247),
-            fontSize: 80,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Helvetica Neue',
-          ),
-        ),
+        ValueListenableBuilder<Box>(
+            valueListenable: Hive.box('settings').listenable(),
+            builder: (context, box, widget) {
+              return Text(t!.youHaveMessage(age),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color.fromARGB(38, 47, 47, 247),
+                    fontSize: 80,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Helvetica Neue',
+                  ));
+            }),
         ElevatedButton(
             onPressed: () {
-              setState(() {
-                count += 1;
-              });
+              box.put(
+                  'person', Person(age: age + 1, friends: [], name: 'Alice'));
             },
             child: Text("+")),
         TextButton(
