@@ -1,0 +1,5 @@
+{
+  "helloWorld": "Привет Мир!",
+  "hello": "Привет, {name}!",
+  "youHaveMessage": "{count,plural, =0{Пока не сообщений} =1{1 сообщение} =2{2 сообщения} other{{count} сообщений}}"
+}

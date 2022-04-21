@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'todo.dart';
 
@@ -69,12 +71,42 @@ void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
+  State<MyApp> createState() => _MyAppState();
+
+  static _MyAppState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MyAppState>();
+}
+
+class _MyAppState extends State<MyApp> {
+  Locale? _locale;
+
+  void setLocale(Locale value) {
+    setState(() {
+      _locale = value;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      // onGenerateTitle: (BuildContext context) =>
+      //     AppLocalizations.of(context)!.helloWorld,
+      locale: _locale,
+      localizationsDelegates: [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [
+        Locale('en', ''), // English, no country code
+        Locale('es', ''), // Spanish, no country code
+        Locale('ru', ''), // Russian, no country code
+      ],
       home: Home(),
     );
   }
@@ -95,6 +127,7 @@ class Home extends HookConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
           children: [
             const Title(),
+            ElevatedButton(onPressed: () {}, child: Text('change lang')),
             TextField(
               key: addTodoKey,
               controller: newTodoController,
@@ -204,20 +237,49 @@ class Toolbar extends HookConsumerWidget {
   }
 }
 
-class Title extends StatelessWidget {
+class Title extends StatefulWidget {
   const Title({Key? key}) : super(key: key);
 
   @override
+  State<Title> createState() => _TitleState();
+}
+
+class _TitleState extends State<Title> {
+  var count = 0;
+
+  @override
   Widget build(BuildContext context) {
-    return const Text(
-      'todos',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        color: Color.fromARGB(38, 47, 47, 247),
-        fontSize: 100,
-        fontWeight: FontWeight.w100,
-        fontFamily: 'Helvetica Neue',
-      ),
+    var t = AppLocalizations.of(context);
+    return Column(
+      children: [
+        Text(
+          t!.youHaveMessage(count),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color.fromARGB(38, 47, 47, 247),
+            fontSize: 80,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'Helvetica Neue',
+          ),
+        ),
+        ElevatedButton(
+            onPressed: () {
+              setState(() {
+                count += 1;
+              });
+            },
+            child: Text("+")),
+        TextButton(
+          child: Text("Set locale to Russain"),
+          onPressed: () => MyApp.of(context)
+              ?.setLocale(Locale.fromSubtags(languageCode: 'ru')),
+        ),
+        TextButton(
+          child: Text("Set locale to English"),
+          onPressed: () => MyApp.of(context)
+              ?.setLocale(Locale.fromSubtags(languageCode: 'en')),
+        ),
+      ],
     );
   }
 }
