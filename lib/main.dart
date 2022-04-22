@@ -6,6 +6,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'todo.dart';
+import 'package:logger/logger.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 /// Some keys used for testing
 final addTodoKey = UniqueKey();
@@ -100,18 +102,18 @@ class _MyAppState extends State<MyApp> {
       // onGenerateTitle: (BuildContext context) =>
       //     AppLocalizations.of(context)!.helloWorld,
       locale: _locale,
-      localizationsDelegates: [
+      localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: [
+      supportedLocales: const [
         Locale('en', ''), // English, no country code
         Locale('es', ''), // Spanish, no country code
         Locale('ru', ''), // Russian, no country code
       ],
-      home: Home(),
+      home: const Home(),
     );
   }
 }
@@ -250,6 +252,7 @@ class Title extends StatefulWidget {
 class _TitleState extends State<Title> {
   // var count = 0;
   var box = Hive.box('settings');
+  var logger = Logger();
 
   // @override
   // void initState() {
@@ -270,28 +273,32 @@ class _TitleState extends State<Title> {
             builder: (context, box, widget) {
               return Text(t!.youHaveMessage(age),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Color.fromARGB(38, 47, 47, 247),
                     fontSize: 80,
                     fontWeight: FontWeight.w400,
                     fontFamily: 'Helvetica Neue',
                   ));
             }),
+        SvgPicture.asset('assets/img/svg/icon.svg', semanticsLabel: 'Logo'),
+        Image.asset('assets/img/png/icon.png'),
         ElevatedButton(
             onPressed: () {
               box.put(
                   'person', Person(age: age + 1, friends: [], name: 'Alice'));
             },
-            child: Text("+")),
+            child: const Text("+")),
         TextButton(
-          child: Text("Set locale to Russain"),
-          onPressed: () => MyApp.of(context)
-              ?.setLocale(Locale.fromSubtags(languageCode: 'ru')),
-        ),
+            child: const Text("Set locale to Russian"),
+            onPressed: () {
+              logger.w("Logger is working!");
+              MyApp.of(context)
+                  ?.setLocale(const Locale.fromSubtags(languageCode: 'ru'));
+            }),
         TextButton(
-          child: Text("Set locale to English"),
+          child: const Text("Set locale to English"),
           onPressed: () => MyApp.of(context)
-              ?.setLocale(Locale.fromSubtags(languageCode: 'en')),
+              ?.setLocale(const Locale.fromSubtags(languageCode: 'en')),
         ),
       ],
     );
@@ -300,7 +307,7 @@ class _TitleState extends State<Title> {
 
 /// A provider which exposes the [Todo] displayed by a [TodoItem].
 ///
-/// By retreiving the [Todo] through a provider instead of through its
+/// By retrieving the [Todo] through a provider instead of through its
 /// constructor, this allows [TodoItem] to be instantiated using the `const` keyword.
 ///
 /// This ensures that when we add/remove/edit todos, only what the
@@ -328,7 +335,7 @@ class TodoItem extends HookConsumerWidget {
           if (focused) {
             textEditingController.text = todo.description;
           } else {
-            // Commit changes only when the textfield is unfocused, for performance
+            // Commit changes only when the text-field is unfocused, for performance
             ref
                 .read(todoListProvider.notifier)
                 .edit(id: todo.id, description: textEditingController.text);
