@@ -291,7 +291,9 @@ class _TitleState extends State<Title> {
         TextButton(
             child: const Text("Set locale to Russian"),
             onPressed: () {
-              logger.w("Logger is working!");
+              logger.w(MediaQuery.of(context).size.height);
+              logger.w(MediaQuery.of(context).size.width);
+              logger.w(MediaQuery.of(context).devicePixelRatio);
               MyApp.of(context)
                   ?.setLocale(const Locale.fromSubtags(languageCode: 'ru'));
             }),
