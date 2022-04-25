@@ -1,13 +1,16 @@
 import 'package:coach/person.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:routemaster/routemaster.dart';
 import 'todo.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:dio/dio.dart';
 
 /// Some keys used for testing
 final addTodoKey = UniqueKey();
@@ -71,6 +74,7 @@ final filteredTodos = Provider<List<Todo>>((ref) {
 });
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   Hive.registerAdapter(PersonAdapter());
   await Hive.initFlutter();
   await Hive.openBox('settings');
@@ -96,9 +100,22 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  final routes = RouteMap(
+    routes: {
+      '/': (_) => const CupertinoTabPage(
+            child: Home(),
+            paths: ['/page1'],
+          ),
+      '/page1': (_) => const MaterialPage(child: Page1Screen()),
+      '/page2': (_) => const MaterialPage(child: Page2Screen()),
+    },
+  );
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
+      routerDelegate: RoutemasterDelegate(routesBuilder: (_) => routes),
+      routeInformationParser: const RoutemasterParser(),
       // onGenerateTitle: (BuildContext context) =>
       //     AppLocalizations.of(context)!.helloWorld,
       locale: _locale,
@@ -113,7 +130,6 @@ class _MyAppState extends State<MyApp> {
         Locale('es', ''), // Spanish, no country code
         Locale('ru', ''), // Russian, no country code
       ],
-      home: const Home(),
     );
   }
 }
@@ -260,6 +276,17 @@ class _TitleState extends State<Title> {
   //   super.initState();
   // }
 
+  void getHttp() async {
+    try {
+      var response = await Dio().get(
+          'https://www.googleapis.com/books/v1/volumes',
+          queryParameters: {'q': 'http'});
+      logger.i(response.data);
+    } catch (e) {
+      logger.i(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var t = AppLocalizations.of(context);
@@ -283,7 +310,12 @@ class _TitleState extends State<Title> {
         SvgPicture.asset('assets/img/svg/icon.svg', semanticsLabel: 'Logo'),
         Image.asset('assets/img/png/icon.png'),
         ElevatedButton(
+          onPressed: () => Routemaster.of(context).push('page2'),
+          child: const Text('Go to page123'),
+        ),
+        ElevatedButton(
             onPressed: () {
+              getHttp();
               box.put(
                   'person', Person(age: age + 1, friends: [], name: 'Alice'));
             },
@@ -380,4 +412,47 @@ bool useIsFocused(FocusNode node) {
   }, [node]);
 
   return isFocused.value;
+}
+
+/// The screen of the first page.
+class Page1Screen extends StatelessWidget {
+  /// Creates a [Page1Screen].
+  const Page1Screen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: const Text('App.title')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ElevatedButton(
+                onPressed: () => Routemaster.of(context).push('page2'),
+                child: const Text('Go to page 2'),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+/// The screen of the second page.
+class Page2Screen extends StatelessWidget {
+  /// Creates a [Page2Screen].
+  const Page2Screen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ElevatedButton(
+                onPressed: () => Routemaster.of(context).push('/'),
+                child: const Text('Go to home page'),
+              ),
+            ],
+          ),
+        ),
+      );
 }
